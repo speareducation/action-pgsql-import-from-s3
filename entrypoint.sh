@@ -4,46 +4,43 @@ INITIAL_DIR=$(pwd)
 
 [ -z "$INPUT_DATABASES" ] && echo '$INPUT_DATABASES Not set' && exit 1
 
-mkdir .pgsql-import-from-s3 && cd .pgsql-import-from-s3
-
-echo "
-[mysql]
-user = $INPUT_POSTGRES_USER
-host = $INPUT_POSTGRES_HOST
-" > .my.cnf
+S3_IMPORTS_DIR=/tmp/.pgsql-import-from-s3
+mkdir -p ${S3_IMPORTS_DIR}
+cd ${S3_IMPORTS_DIR}
 
 [ ! -z "$INPUT_POSTGRES_PASS" ] && export PGPASSWORD=$INPUT_POSTGRES_PASS
 [ ! -z "$INPUT_POSTGRES_PORT" ] && port = $INPUT_POSTGRES_PORT
 
-POSTGRES="psql --host $host --port $port --username $user "
+POSTGRES="psql --host $INPUT_POSTGRES_HOST --port $INPUT_POSTGRES_PORT --username $INPUT_POSTGRES_USER "
 
-# Wait for MySQL to start"
-i=0; while [ $((i+1)) -lt 30 ] && [ ! $($POSTGRES -Nse "SELECT VERSION();") ]
+for dbName in $INPUT_DATABASES
 do
-    echo "Waiting for MySQL... $i"
-    sleep 1;
-done
-[ "$i" == "30" ] && echo "Failed to connect to mysql." && exit 1
+    tddDbName="${dbName}_tdd"
+    dumpFile="./$dbName.sql.gz"
 
-for ENTRY in $(echo "$INPUT_DATABASES" | jq -c .[])
-do
-    db=$(echo "$ENTRY" | jq -r .db)
-    s3Uri=$(echo "$ENTRY" | jq -r .s3Uri)
-    dumpFile=$(basename "$s3Uri")
-    aws s3 cp "$s3Uri" "./$dumpFile"
-    [ ! -f "$dumpFile" ] && echo "Failed to download $dumpFile" && exit 1
+    echo "Downloading schema dump for $dbName"
 
+    S3_LOCATION="s3://$INPUT_S3_BUCKET/redshift/schemas/$dbName.schema.latest.sql.gz
+    echo "Trying ${S3_LOCATION}" && \
+    aws s3 cp "${S3_LOCATION}" "$dumpFile"
+
+    [[ ! -f "$dumpFile" ]] && echo "Failed to download $dumpFile" && exit 1
+
+    echo "Creating $tddDbName"
     echo "Creating schema $db"
-    $POSTGRES -d $db -e "CREATE SCHEMA IF NOT EXISTS $db;" || exit 1
-    
-    echo "Importing $db from file '${dumpFile}'"
+    $POSTGRES -d $tddDbName -e "CREATE SCHEMA IF NOT EXISTS $tddDbName;" || exit 1
+
+    echo "Importing $tddDbName from file '${dumpFile}'"
     if [[ "$dumpFile" == *.gz ]]
     then
         gunzip -c "$dumpFile"
         dumpFile=$(echo $dumpFile | sed -e 's/.gz$//g')
     fi
-    $POSTGRES -d $db -f $dumpFile --echo-errors -t || exit 254
+    $POSTGRES -d $tddDbName -f $dumpFile --echo-errors -t || exit 254
+
 done
-echo "Cleaning up .mysql-import-from-s3 dir..."
-rm -rf .pgsql-import-from-s3
+
+echo "Cleaning up imports dir ${S3_IMPORTS_DIR}..."
+rm -rf ${S3_IMPORTS_DIR}
+
 exit 0
