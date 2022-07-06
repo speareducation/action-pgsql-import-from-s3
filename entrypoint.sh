@@ -28,17 +28,8 @@ do
     [[ ! -f "$dumpFile" ]] && echo "Failed to download $dumpFile" && exit 1
 
     echo "Creating $tddDbName"
-    echo "Creating schema $db"
     $POSTGRES -c "CREATE DATABASE $tddDbName;"
-    $POSTGRES -d $tddDbName -c "CREATE SCHEMA IF NOT EXISTS $tddDbName;" || exit 1
-
-    echo "Importing $tddDbName from file '${dumpFile}'"
-    if [[ "$dumpFile" == *.gz ]]
-    then
-        gunzip -c "$dumpFile"
-        dumpFile=$(echo $dumpFile | sed -e 's/.gz$//g')
-    fi
-    $POSTGRES -d $tddDbName -f $dumpFile --echo-errors -t || exit 254
+    $POSTGRES -d $tddDbName -f $dumpFile --echo-errors -t
 
 done
 
