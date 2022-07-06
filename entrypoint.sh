@@ -29,7 +29,7 @@ do
 
     echo "Creating $tddDbName"
     $POSTGRES -c "CREATE DATABASE $tddDbName;"
-    $POSTGRES -d $tddDbName -f $dumpFile --echo-errors -t
+    $POSTGRES -d $tddDbName -f $dumpFile -t
 
 done
 
