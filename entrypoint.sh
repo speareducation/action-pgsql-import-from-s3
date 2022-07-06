@@ -29,7 +29,7 @@ do
 
     echo "Creating $tddDbName"
     echo "Creating schema $db"
-    $POSTGRES -c "CREATE DATABASE $tddDbName"
+    $POSTGRES -c "CREATE DATABASE $tddDbName;"
     $POSTGRES -d $tddDbName -c "CREATE SCHEMA IF NOT EXISTS $tddDbName;" || exit 1
 
     echo "Importing $tddDbName from file '${dumpFile}'"
