@@ -28,7 +28,14 @@ do
     [[ ! -f "$dumpFile" ]] && echo "Failed to download $dumpFile" && exit 1
 
     echo "Creating $tddDbName"
+
     $POSTGRES -c "CREATE DATABASE $tddDbName;"
+
+    if [[ "$dumpFile" == *.gz ]]
+    then
+        gunzip -c "$dumpFile"
+        dumpFile=$(echo $dumpFile | sed -e 's/.gz$//g')
+    fi
     $POSTGRES -d $tddDbName -f $dumpFile -t
 
 done
