@@ -21,7 +21,7 @@ do
 
     echo "Downloading schema dump for $dbName"
 
-    S3_LOCATION="s3://$INPUT_S3_BUCKET/redshift/schemas/$dbName.schema.latest.sql.gz
+    S3_LOCATION="s3://$INPUT_S3_BUCKET/redshift/schemas/$dbName.schema.latest.sql.gz"
     echo "Trying ${S3_LOCATION}" && \
     aws s3 cp "${S3_LOCATION}" "$dumpFile"
 
