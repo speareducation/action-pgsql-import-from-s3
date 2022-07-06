@@ -17,11 +17,12 @@ inputs:
   postgres_user:
     description: PostGres User
     required: false
-    default: root
+    default: "postgres"
   postgres_pass:
     description: PostGres Pass
     required: false
+    default: "mypassword"
   postgres_port:
     description: PostGres Port
     required: false
-    default: "3306"
+    default: "5432"
