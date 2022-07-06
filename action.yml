@@ -1,0 +1,27 @@
+name: Spear Core Postgres Database Setup
+description: A GitHub action to pull pgdump files from S3 and import them.
+branding:
+  icon: check-circle
+  color: green
+runs:
+  using: docker
+  image: Dockerfile
+inputs:
+  databases:
+    description: Space-delimited list of databases
+    required: true
+  postgres_host:
+    description: PostGres Host
+    required: false
+    default: postgres_tdd
+  postgres_user:
+    description: PostGres User
+    required: false
+    default: root
+  postgres_pass:
+    description: PostGres Pass
+    required: false
+  postgres_port:
+    description: PostGres Port
+    required: false
+    default: "3306"
