@@ -31,8 +31,7 @@ do
     echo "Creating $tddDbName"
 
     $POSTGRES -c "CREATE DATABASE $tddDbName;"
-    psql --version
-    psql --help
+
     $POSTGRES -d $tddDbName -f $dumpFile
 
 done
