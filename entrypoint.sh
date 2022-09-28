@@ -17,26 +17,22 @@ POSTGRES="psql --host $INPUT_POSTGRES_HOST --port $INPUT_POSTGRES_PORT --usernam
 for dbName in $INPUT_DATABASES
 do
     tddDbName="${dbName}_tdd"
-    dumpFile="./$dbName.sql.gz"
+    dumpFile="./$dbName.sql"
 
     echo "Downloading schema dump for $dbName"
 
     S3_LOCATION="s3://$INPUT_S3_BUCKET/redshift/schemas/$dbName.schema.latest.sql.gz"
     echo "Trying ${S3_LOCATION}" && \
-    aws s3 cp "${S3_LOCATION}" "$dumpFile"
+    aws s3 cp "${S3_LOCATION}" "$dumpFile.gz"
 
-    [[ ! -f "$dumpFile" ]] && echo "Failed to download $dumpFile" && exit 1
+    [[ ! -f "$dumpFile.gz" ]] && echo "Failed to download $dumpFile" && exit 1
+    gunzip "$dumpFile.gz"
 
     echo "Creating $tddDbName"
 
     $POSTGRES -c "CREATE DATABASE $tddDbName;"
 
-    if [[ "$dumpFile" == *.gz ]]
-    then
-        gunzip -c "$dumpFile"
-        dumpFile=$(echo $dumpFile | sed -e 's/.gz$//g')
-    fi
-    $POSTGRES -d $tddDbName -f $dumpFile -t
+    $POSTGRES -d $tddDbName -f $dumpFile --echo-errors
 
 done
 
